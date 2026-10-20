@@ -1,0 +1,42 @@
+# Byte-compiled / cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+
+# Configuration locale personnalisée spécifique à la machine de l'utilisateur
+# (default_config.json reste partagé dans le repo)
+fsm_config.json
+
+# Dossiers d'exécutions et calculs CFD lourds (ne pas versionner dans Git)
+runs/
+tests/output/
+post/
+
+# Fichiers de calculs et sauvegardes volumineuses Fluent / HDF5
+*.cas.h5
+*.dat.h5
+before_run.cas.h5
+result.cas.h5
+result.dat.h5
+cl_test*.txt
+cd_test*.txt
+airfoil_pressure*.csv
+fluent_execution.log
+
+# Sauvegardes locales temporaires
+backups/
+
+# Éditeurs et OS
+.vscode/
+.idea/
+*.swp
+*.bak
+Thumbs.db
+Desktop.ini

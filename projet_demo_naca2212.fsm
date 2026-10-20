@@ -1,0 +1,183 @@
+{
+  "version": "1.0",
+  "project_name": "Etude_Polaires_NACA2212",
+  "created_at": 1776696000.0,
+  "updated_at": 1776696000.0,
+  "cases": [
+    {
+      "id": "SIM_001",
+      "name": "NACA 2212 - Alpha -2.0°",
+      "parameters": {
+        "mesh_file": "profil_test.bdf",
+        "alpha_deg": -2.0,
+        "velocity": 30.0,
+        "density": 1.225,
+        "pressure_ref": 0.0,
+        "chord": 1.0,
+        "iterations": 200,
+        "cores": 4,
+        "turbulence_model": "kw-sst"
+      },
+      "status": "En attente",
+      "current_iteration": 0,
+      "total_iterations": 200,
+      "progress_percent": 0,
+      "start_time": null,
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "error_message": "",
+      "work_dir": null,
+      "log_file": null,
+      "results": {
+        "cl_final": null,
+        "cd_final": null,
+        "cl_cd_ratio": null,
+        "iteration_final": null,
+        "cl_history": [],
+        "cd_history": [],
+        "pressure_file": null,
+        "postprocess_success": false
+      }
+    },
+    {
+      "id": "SIM_002",
+      "name": "NACA 2212 - Alpha 0.0°",
+      "parameters": {
+        "mesh_file": "profil_test.bdf",
+        "alpha_deg": 0.0,
+        "velocity": 30.0,
+        "density": 1.225,
+        "pressure_ref": 0.0,
+        "chord": 1.0,
+        "iterations": 200,
+        "cores": 4,
+        "turbulence_model": "kw-sst"
+      },
+      "status": "En attente",
+      "current_iteration": 0,
+      "total_iterations": 200,
+      "progress_percent": 0,
+      "start_time": null,
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "error_message": "",
+      "work_dir": null,
+      "log_file": null,
+      "results": {
+        "cl_final": null,
+        "cd_final": null,
+        "cl_cd_ratio": null,
+        "iteration_final": null,
+        "cl_history": [],
+        "cd_history": [],
+        "pressure_file": null,
+        "postprocess_success": false
+      }
+    },
+    {
+      "id": "SIM_003",
+      "name": "NACA 2212 - Alpha +2.0°",
+      "parameters": {
+        "mesh_file": "profil_test.bdf",
+        "alpha_deg": 2.0,
+        "velocity": 30.0,
+        "density": 1.225,
+        "pressure_ref": 0.0,
+        "chord": 1.0,
+        "iterations": 200,
+        "cores": 4,
+        "turbulence_model": "kw-sst"
+      },
+      "status": "En attente",
+      "current_iteration": 0,
+      "total_iterations": 200,
+      "progress_percent": 0,
+      "start_time": null,
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "error_message": "",
+      "work_dir": null,
+      "log_file": null,
+      "results": {
+        "cl_final": null,
+        "cd_final": null,
+        "cl_cd_ratio": null,
+        "iteration_final": null,
+        "cl_history": [],
+        "cd_history": [],
+        "pressure_file": null,
+        "postprocess_success": false
+      }
+    },
+    {
+      "id": "SIM_004",
+      "name": "NACA 2212 - Alpha +4.0°",
+      "parameters": {
+        "mesh_file": "profil_test.bdf",
+        "alpha_deg": 4.0,
+        "velocity": 30.0,
+        "density": 1.225,
+        "pressure_ref": 0.0,
+        "chord": 1.0,
+        "iterations": 200,
+        "cores": 4,
+        "turbulence_model": "kw-sst"
+      },
+      "status": "En attente",
+      "current_iteration": 0,
+      "total_iterations": 200,
+      "progress_percent": 0,
+      "start_time": null,
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "error_message": "",
+      "work_dir": null,
+      "log_file": null,
+      "results": {
+        "cl_final": null,
+        "cd_final": null,
+        "cl_cd_ratio": null,
+        "iteration_final": null,
+        "cl_history": [],
+        "cd_history": [],
+        "pressure_file": null,
+        "postprocess_success": false
+      }
+    },
+    {
+      "id": "SIM_005",
+      "name": "NACA 2212 - Alpha +6.0°",
+      "parameters": {
+        "mesh_file": "profil_test.bdf",
+        "alpha_deg": 6.0,
+        "velocity": 30.0,
+        "density": 1.225,
+        "pressure_ref": 0.0,
+        "chord": 1.0,
+        "iterations": 200,
+        "cores": 4,
+        "turbulence_model": "kw-sst"
+      },
+      "status": "En attente",
+      "current_iteration": 0,
+      "total_iterations": 200,
+      "progress_percent": 0,
+      "start_time": null,
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "error_message": "",
+      "work_dir": null,
+      "log_file": null,
+      "results": {
+        "cl_final": null,
+        "cd_final": null,
+        "cl_cd_ratio": null,
+        "iteration_final": null,
+        "cl_history": [],
+        "cd_history": [],
+        "pressure_file": null,
+        "postprocess_success": false
+      }
+    }
+  ]
+}

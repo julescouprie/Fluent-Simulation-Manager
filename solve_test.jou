@@ -1,0 +1,101 @@
+; =====================================================================
+; solve_test.jou - NACA 2212, 2D, k-omega SST, V = 30 m/s
+; Lancer Fluent DEPUIS le dossier du cas (profil_test.bdf + ce journal dedans) :
+;   cd "dossier_du_cas"
+;   fluent 2d -t4 -i solve_test.jou        (ajouter -g pour masquer l'interface)
+; Tous les chemins sont relatifs : le dossier peut etre deplace ou copie
+; A parametrer depuis Python : la vitesse (etapes 5 et 6), le nombre d'iterations
+; =====================================================================
+
+; 1. Import du maillage + controles dans la console
+/file/import/nastran/bulkdata profil_test.bdf
+/mesh/check
+/define/boundary-conditions/list-zones
+
+; 2. Zone de cellules : renommer d'abord, puis changer le type en fluide
+/define/boundary-conditions/modify-zones/zone-name solid-1 fluid
+/define/boundary-conditions/modify-zones/zone-type fluid fluid
+; Materiau air (arguments valides en 2026 R1)
+/define/boundary-conditions/fluid fluid yes air no no no no 0 no 0 no no no no
+
+; 3. Frontieres : renommer AVANT de changer le type
+; (Fluent peut renommer une zone toute seule quand son type change)
+/define/boundary-conditions/modify-zones/zone-name wall-2 Inlet_top
+/define/boundary-conditions/modify-zones/zone-name wall-3 Inlet_bottom
+/define/boundary-conditions/modify-zones/zone-name wall-4 bottom
+/define/boundary-conditions/modify-zones/zone-name wall-5 outlet
+/define/boundary-conditions/modify-zones/zone-name wall-6 top
+/define/boundary-conditions/modify-zones/zone-name wall-7 airfoil
+
+/define/boundary-conditions/modify-zones/zone-type Inlet_top velocity-inlet
+/define/boundary-conditions/modify-zones/zone-type Inlet_bottom velocity-inlet
+/define/boundary-conditions/modify-zones/zone-type outlet pressure-outlet
+; top et bottom (y = +/-15) en symetrie : pas de vitesse imposee, pas de prompt fragile
+/define/boundary-conditions/modify-zones/zone-type bottom symmetry
+/define/boundary-conditions/modify-zones/zone-type top symmetry
+
+; 4. Modele de turbulence k-omega SST
+/define/models/viscous/kw-sst? yes
+
+; 5. Vitesse de 30 m/s sur les deux arcs d'entree
+; Composantes (Vx = 30, Vy = 0), turbulence = "Intensity and Viscosity Ratio" (0.1 %, ratio 10)
+; Ordre des prompts : ... Y-velocity, puis les methodes de turbulence en oui/non
+; (K and Omega, Intensity and Length Scale, Intensity and Viscosity Ratio) :
+; le premier "yes" arrete la serie, d'ou "no no yes" puis intensite et ratio.
+; ATTENTION : ne pas ecrire "yes" tout seul, il tomberait sur K and Omega.
+/define/boundary-conditions/velocity-inlet inlet_top no yes yes no 0 no 30 no 0 no no yes 0.1 10
+/define/boundary-conditions/velocity-inlet inlet_bottom no yes yes no 0 no 30 no 0 no no yes 0.1 10
+
+; 6. Solveur Coupled (le pseudo-transient est actif par defaut avec Coupled
+; dans les versions recentes : verifier dans Solution Methods)
+/solve/set/p-v-coupling 24
+; ancienne ligne, non validee en 2026 R1 :
+; /solve/set/pseudo-transient yes yes no no
+
+; Schemas du second ordre (0 = 1er ordre, 1 = 2nd ordre upwind, 12 = pression 2nd ordre)
+/solve/set/discretization-scheme/pressure 12
+/solve/set/discretization-scheme/mom 1
+/solve/set/discretization-scheme/k 1
+/solve/set/discretization-scheme/omega 1
+
+; 7. Valeurs de reference (doivent etre egales a la vitesse d'entree : 30 m/s)
+/report/reference-values/area 1.0
+/report/reference-values/length 1.0
+/report/reference-values/velocity 30.0
+/report/reference-values/density 1.225
+
+; 8. Definitions de Cl et Cd sur la paroi airfoil
+; Syntaxe relevee dans la console 2026 R1 : type "lift" / "drag", scaled? yes = coefficient
+; ATTENTION : les lignes vides ci-dessous sont voulues (elles ferment la liste de zones)
+/solve/report-definitions/add cl-rep lift thread-names airfoil
+
+force-vector 0 1 scaled? yes q
+/solve/report-definitions/add cd-rep drag thread-names airfoil
+
+force-vector 1 0 scaled? yes q
+/solve/report-definitions/list
+
+; 9. Fichiers de rapport : a creer AVANT l'iteration, ils s'ecrivent a chaque iteration
+/solve/report-files/add cl-file active? yes report-defs cl-rep () file-name "cl_test.txt" print? no q
+/solve/report-files/add cd-file active? yes report-defs cd-rep () file-name "cd_test.txt" print? no q
+
+; 10. Criteres de residus tres stricts pour que le calcul ne s'arrete pas trop tot
+; (5 valeurs : continuite, vx, vy, k, omega)
+/solve/monitors/residual/convergence-criteria 1e-8 1e-8 1e-8 1e-8 1e-8
+
+; 11. Initialisation hybride, puis sauvegarde du cas pour verification dans le GUI
+/solve/initialize/hyb-initialization
+/file/write-case before_run.cas.h5
+
+; 12. Calcul
+/solve/iterate 200
+
+; 13. Sauvegarde finale
+/file/write-case-data result.cas.h5
+
+; 14. Export automatique des données de pression sur le profil
+/file/export/ascii airfoil_pressure.csv
+airfoil yes x-coordinate y-coordinate pressure total-pressure () no
+
+; 15. Fermeture
+/exit yes

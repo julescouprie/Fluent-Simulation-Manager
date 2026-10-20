@@ -1,0 +1,10 @@
+{
+  "fluent_exe": "C:\\Program Files\\ANSYS Inc\\v261\\fluent\\ntbin\\win64\\fluent.exe",
+  "default_cores": 4,
+  "default_iterations": 200,
+  "default_mesh": "profil_test.bdf",
+  "runs_dir": "runs",
+  "simulation_mode": "real",
+  "theme": "dark_tech",
+  "recent_projects": []
+}
