@@ -19,7 +19,7 @@ class TestGUIHeadless(unittest.TestCase):
 
         window = MainWindow()
         self.assertIsNotNone(window)
-        self.assertEqual(window.tabs.count(), 2)
+        self.assertEqual(window.tabs.count(), 6)
 
         # Vérification des cas par défaut
         self.assertTrue(len(window.project_manager.cases) >= 5)

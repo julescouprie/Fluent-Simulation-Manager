@@ -34,6 +34,10 @@ from ui.dashboard_widget import DashboardWidget
 from ui.log_viewer_widget import LogViewerWidget
 from ui.settings_dialog import SettingsDialog
 from ui.simulation_table import SimulationTableWidget
+from ui.design_space_widget import DesignSpaceWidget
+from ui.campaign_widget import CampaignWidget
+from ui.aero_mapping_widget import AeroMappingWidget
+from ui.kriging_export_widget import KrigingExportWidget
 from ui.theme import DARK_TECH_STYLESHEET
 
 
@@ -163,9 +167,27 @@ class MainWindow(QMainWindow):
         lay_tab_queue.addWidget(v_splitter)
         self.tabs.addTab(tab_queue, "⚡ File de Simulation & Exécution")
 
-        # Onglet 2 : Comparaison & Résultats
+        # Onglet 2 : Espace de Conception (Design Space)
+        self.design_space_widget = DesignSpaceWidget(self.project_manager.design_space)
+        self.design_space_widget.design_space_changed.connect(self._on_design_space_changed)
+        self.tabs.addTab(self.design_space_widget, "📐 Espace de Conception")
+
+        # Onglet 3 : Campagnes & Plans d'Expériences (DoE)
+        self.campaign_widget = CampaignWidget(self.project_manager.design_space)
+        self.campaign_widget.campaign_created.connect(self._on_campaign_created)
+        self.tabs.addTab(self.campaign_widget, "🎯 Campagnes & DoE")
+
+        # Onglet 4 : Aéro Mapping
+        self.aero_mapping_widget = AeroMappingWidget(self.project_manager.design_space)
+        self.tabs.addTab(self.aero_mapping_widget, "🗺️ Aéro Mapping")
+
+        # Onglet 5 : Analyse Polaires & Cp
         self.comparison_widget = ComparisonWidget()
-        self.tabs.addTab(self.comparison_widget, "📊 Analyse & Comparaison des Résultats")
+        self.tabs.addTab(self.comparison_widget, "📊 Analyse Polaires & Cp")
+
+        # Onglet 6 : Base de Données & Export Krigeage
+        self.kriging_export_widget = KrigingExportWidget(self.project_manager.design_space)
+        self.tabs.addTab(self.kriging_export_widget, "📦 Export Krigeage")
 
         main_layout.addWidget(self.tabs)
 
@@ -316,7 +338,29 @@ class MainWindow(QMainWindow):
         counts = self.project_manager.get_summary_counts()
         self.dashboard.update_stats(counts, self.accumulated_seconds)
         self.comparison_widget.set_cases(self.project_manager.cases)
+        if hasattr(self, "aero_mapping_widget"):
+            self.aero_mapping_widget.set_cases(self.project_manager.cases)
+        if hasattr(self, "kriging_export_widget"):
+            self.kriging_export_widget.set_cases(self.project_manager.cases)
+        if hasattr(self, "campaign_widget"):
+            self.campaign_widget.update_active_variables_display()
         self._update_status_bar()
+
+    def _on_design_space_changed(self):
+        if hasattr(self, "campaign_widget"):
+            self.campaign_widget.update_active_variables_display()
+        if hasattr(self, "aero_mapping_widget"):
+            self.aero_mapping_widget._populate_variable_combos()
+            self.aero_mapping_widget.update_view()
+        if hasattr(self, "kriging_export_widget"):
+            self.kriging_export_widget.update_preview()
+
+    def _on_campaign_created(self, campaign, cases):
+        self.project_manager.add_campaign(campaign)
+        for c in cases:
+            self.project_manager.add_case(c)
+        self._update_all_views()
+        self.tabs.setCurrentIndex(0)
 
     def _update_status_bar(self):
         mode = self.settings.simulation_mode

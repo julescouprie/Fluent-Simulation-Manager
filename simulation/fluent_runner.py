@@ -9,6 +9,7 @@ from typing import Callable, Optional
 from core.case_model import SimulationCase, CaseStatus
 from .journal_generator import generate_fluent_journal
 from .process_manager import terminate_process_tree
+from .mesh_generator import MeshManager
 
 
 class FluentRunner:
@@ -81,15 +82,31 @@ class FluentRunner:
             self._log(f"[ERREUR] {case.error_message}")
             return False
 
-        if not original_mesh_path.is_file():
+        # Résolution ou génération dynamique du maillage via MeshManager
+        try:
+            mesh_mgr = MeshManager()
+            resolved_mesh = mesh_mgr.get_mesh_for_parameters(
+                m=case.parameters.camber_m,
+                p=case.parameters.camber_p,
+                t=case.parameters.thickness_t,
+                c=case.parameters.chord,
+                base_fallback=original_mesh_path,
+            )
+        except Exception as exc:
             case.status = CaseStatus.ECHEC
-            case.error_message = f"Fichier de maillage introuvable : {original_mesh_path}"
+            case.error_message = f"Échec de la génération/résolution du maillage Gmsh : {exc}"
+            self._log(f"[ERREUR GÉOMÉTRIE] {case.error_message}")
+            return False
+
+        if not resolved_mesh.is_file():
+            case.status = CaseStatus.ECHEC
+            case.error_message = f"Fichier de maillage introuvable : {resolved_mesh}"
             self._log(f"[ERREUR] {case.error_message}")
             return False
 
         # Préparation du répertoire
         try:
-            case_dir = self.prepare_case_directory(case, original_mesh_path)
+            case_dir = self.prepare_case_directory(case, resolved_mesh)
         except Exception as exc:
             case.status = CaseStatus.ECHEC
             case.error_message = f"Erreur lors de la préparation du dossier : {exc}"

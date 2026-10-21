@@ -143,7 +143,7 @@ class ComparisonWidget(QWidget):
         self.list_cases.clear()
 
         for c in self.cases:
-            if c.status == CaseStatus.TERMINEE and c.results.cl_final is not None:
+            if c.status in (CaseStatus.TERMINEE_CONVERGEE, CaseStatus.TERMINEE_NON_CONVERGEE) and c.results.cl_final is not None:
                 item = QListWidgetItem(f"[{c.parameters.alpha_deg:+.1f}°] {c.name} ({c.id})")
                 item.setData(Qt.UserRole, c.id)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)

@@ -47,7 +47,9 @@ class SimulationTableWidget(QTableWidget):
         CaseStatus.PREPARATION: ("#38bdf8", "#082f49"),
         CaseStatus.EN_COURS: ("#0284c7", "#0c4a6e"),
         CaseStatus.POST_TRAITEMENT: ("#818cf8", "#1e1b4b"),
-        CaseStatus.TERMINEE: ("#10b981", "#064e3b"),
+        CaseStatus.TERMINEE_CONVERGEE: ("#10b981", "#064e3b"),
+        CaseStatus.TERMINEE_NON_CONVERGEE: ("#f59e0b", "#451a03"),
+        CaseStatus.INCOMPLETE: ("#ea580c", "#431407"),
         CaseStatus.ECHEC: ("#ef4444", "#450a0a"),
         CaseStatus.ANNULEE: ("#94a3b8", "#1e293b"),
     }
@@ -153,10 +155,18 @@ class SimulationTableWidget(QTableWidget):
             else:
                 pbar.setRange(0, 0)
                 pbar.setFormat("Calcul en cours...")
-        elif case.status == CaseStatus.TERMINEE:
+        elif case.status == CaseStatus.TERMINEE_CONVERGEE:
             pbar.setRange(0, 100)
             pbar.setValue(100)
-            pbar.setFormat("100% Terminé")
+            pbar.setFormat("100% Convergé")
+        elif case.status == CaseStatus.TERMINEE_NON_CONVERGEE:
+            pbar.setRange(0, 100)
+            pbar.setValue(100)
+            pbar.setFormat("100% Non-stabilisé")
+        elif case.status == CaseStatus.INCOMPLETE:
+            pbar.setRange(0, 100)
+            pbar.setValue(case.progress_percent)
+            pbar.setFormat("Incomplet")
         elif case.status == CaseStatus.ECHEC:
             pbar.setRange(0, 100)
             pbar.setValue(case.progress_percent)

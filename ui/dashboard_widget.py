@@ -51,17 +51,19 @@ class DashboardWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 10)
         layout.setSpacing(10)
 
-        self.card_total = StatCard("Total Simulations", "0", "#38bdf8")
+        self.card_total = StatCard("Total", "0", "#38bdf8")
         self.card_pending = StatCard("En attente", "0", "#facc15")
         self.card_running = StatCard("En cours", "0", "#0284c7")
-        self.card_done = StatCard("Terminées", "0", "#10b981")
+        self.card_converged = StatCard("Convergées", "0", "#10b981")
+        self.card_unconverged = StatCard("Non convergées", "0", "#f59e0b")
         self.card_failed = StatCard("Échecs", "0", "#ef4444")
-        self.card_time = StatCard("Temps de calcul", "00:00", "#a855f7")
+        self.card_time = StatCard("Temps", "00:00", "#a855f7")
 
         layout.addWidget(self.card_total)
         layout.addWidget(self.card_pending)
         layout.addWidget(self.card_running)
-        layout.addWidget(self.card_done)
+        layout.addWidget(self.card_converged)
+        layout.addWidget(self.card_unconverged)
         layout.addWidget(self.card_failed)
         layout.addWidget(self.card_time)
 
@@ -69,7 +71,8 @@ class DashboardWidget(QWidget):
         self.card_total.set_value(str(counts.get("total", 0)))
         self.card_pending.set_value(str(counts.get("en_attente", 0)))
         self.card_running.set_value(str(counts.get("en_cours", 0)))
-        self.card_done.set_value(str(counts.get("terminee", 0)))
+        self.card_converged.set_value(str(counts.get("terminee_convergee", 0)))
+        self.card_unconverged.set_value(str(counts.get("terminee_non_convergee", 0)))
         self.card_failed.set_value(str(counts.get("echec", 0)))
 
         mins = int(elapsed_seconds // 60)

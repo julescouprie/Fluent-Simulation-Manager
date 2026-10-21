@@ -30,7 +30,11 @@ cd_test*.txt
 airfoil_pressure*.csv
 fluent_execution.log
 
-# Sauvegardes locales temporaires
+# Base de données locale SQLite et caches de maillage
+*.db
+meshes/*.bdf
+meshes/*.msh
+export_kriging/
 backups/
 
 # Éditeurs et OS

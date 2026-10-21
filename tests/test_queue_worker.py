@@ -58,10 +58,10 @@ class TestQueueWorker(unittest.TestCase):
         self.assertEqual(len(started), 3)
         self.assertEqual(len(finished), 3)
 
-        # c1 et c2 doivent être terminées avec succès
-        self.assertEqual(c1.status, CaseStatus.TERMINEE)
+        # c1 et c2 doivent être terminées avec succès (et convergence validée)
+        self.assertEqual(c1.status, CaseStatus.TERMINEE_CONVERGEE)
         self.assertIsNotNone(c1.results.cl_final)
-        self.assertEqual(c2.status, CaseStatus.TERMINEE)
+        self.assertEqual(c2.status, CaseStatus.TERMINEE_CONVERGEE)
         self.assertIsNotNone(c2.results.cl_final)
 
         # c3 doit être en échec car son nom contient "fail"

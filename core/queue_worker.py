@@ -161,11 +161,15 @@ class QueueWorker(QObject):
             results = process_case_results(Path(case.work_dir), case.parameters)
             case.results = results
             if results.postprocess_success:
-                case.status = CaseStatus.TERMINEE
-                log_cb(f"[TERMINÉ] Succès ! CL = {results.cl_final:.5f}, CD = {results.cd_final:.5f}, Finesse = {results.cl_cd_ratio:.2f}")
+                if results.is_converged:
+                    case.status = CaseStatus.TERMINEE_CONVERGEE
+                    log_cb(f"[QUALITÉ VALIDÉE] Convergence satisfaite ! CL = {results.cl_final:.5f}, CD = {results.cd_final:.5f}, Finesse = {results.cl_cd_ratio:.2f}")
+                else:
+                    case.status = CaseStatus.TERMINEE_NON_CONVERGEE
+                    log_cb(f"[AVERTISSEMENT CONVERGENCE] Calcul terminé sans stabilisation asymptotique stricte : {results.quality_message}")
                 self.case_finished.emit(case.id, True, "")
             else:
-                case.status = CaseStatus.ECHEC
+                case.status = CaseStatus.INCOMPLETE
                 case.error_message = "Post-traitement incomplet : données de portance/traînée invalides."
                 log_cb(f"[ERREUR] {case.error_message}")
                 self.case_finished.emit(case.id, False, case.error_message)

@@ -50,9 +50,38 @@ class CaseDialog(QDialog):
 
         main_layout.addWidget(grp_general)
 
-        # 2. Paramètres aérodynamiques
-        grp_aero = QGroupBox("Paramètres d'écoulement et géométrie")
+        # 2. Paramètres géométriques et aérodynamiques
+        grp_aero = QGroupBox("Paramètres géométriques (Profil NACA 4-chiffres) & Écoulement")
         lay_aero = QFormLayout(grp_aero)
+
+        self.spin_camber_m = QDoubleSpinBox()
+        self.spin_camber_m.setRange(0.00, 0.10)
+        self.spin_camber_m.setDecimals(3)
+        self.spin_camber_m.setSingleStep(0.01)
+        self.spin_camber_m.setValue(0.02)
+        lay_aero.addRow("Cambrure max (m) :", self.spin_camber_m)
+
+        self.spin_camber_p = QDoubleSpinBox()
+        self.spin_camber_p.setRange(0.05, 0.90)
+        self.spin_camber_p.setDecimals(2)
+        self.spin_camber_p.setSingleStep(0.05)
+        self.spin_camber_p.setValue(0.20)
+        lay_aero.addRow("Position cambrure (p) :", self.spin_camber_p)
+
+        self.spin_thickness_t = QDoubleSpinBox()
+        self.spin_thickness_t.setRange(0.03, 0.35)
+        self.spin_thickness_t.setDecimals(3)
+        self.spin_thickness_t.setSingleStep(0.01)
+        self.spin_thickness_t.setValue(0.12)
+        lay_aero.addRow("Épaisseur max (t/c) :", self.spin_thickness_t)
+
+        self.spin_chord = QDoubleSpinBox()
+        self.spin_chord.setRange(0.01, 100.0)
+        self.spin_chord.setDecimals(3)
+        self.spin_chord.setSingleStep(0.1)
+        self.spin_chord.setSuffix(" m")
+        self.spin_chord.setValue(1.0)
+        lay_aero.addRow("Longueur de corde (c) :", self.spin_chord)
 
         self.spin_alpha = QDoubleSpinBox()
         self.spin_alpha.setRange(-90.0, 90.0)
@@ -69,14 +98,6 @@ class CaseDialog(QDialog):
         self.spin_velocity.setSuffix(" m/s")
         self.spin_velocity.setValue(30.0)
         lay_aero.addRow("Vitesse de l'écoulement (U) :", self.spin_velocity)
-
-        self.spin_chord = QDoubleSpinBox()
-        self.spin_chord.setRange(0.01, 100.0)
-        self.spin_chord.setDecimals(3)
-        self.spin_chord.setSingleStep(0.1)
-        self.spin_chord.setSuffix(" m")
-        self.spin_chord.setValue(1.0)
-        lay_aero.addRow("Longueur de corde (c) :", self.spin_chord)
 
         self.spin_density = QDoubleSpinBox()
         self.spin_density.setRange(0.01, 100.0)
@@ -137,6 +158,9 @@ class CaseDialog(QDialog):
         self.edit_name.setText(case.name)
         p = case.parameters
         self.edit_mesh.setText(p.mesh_file)
+        self.spin_camber_m.setValue(p.camber_m)
+        self.spin_camber_p.setValue(p.camber_p)
+        self.spin_thickness_t.setValue(p.thickness_t)
         self.spin_alpha.setValue(p.alpha_deg)
         self.spin_velocity.setValue(p.velocity)
         self.spin_chord.setValue(p.chord)
@@ -170,6 +194,9 @@ class CaseDialog(QDialog):
 
     def get_parameters(self) -> PhysicalParameters:
         return PhysicalParameters(
+            camber_m=self.spin_camber_m.value(),
+            camber_p=self.spin_camber_p.value(),
+            thickness_t=self.spin_thickness_t.value(),
             mesh_file=self.edit_mesh.text().strip(),
             alpha_deg=self.spin_alpha.value(),
             velocity=self.spin_velocity.value(),

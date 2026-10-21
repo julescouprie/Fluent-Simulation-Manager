@@ -6,7 +6,7 @@ import shutil
 import time
 from typing import Callable, Optional
 import numpy as np
-from core.case_model import SimulationCase, CaseStatus
+from core.case_model import SimulationCase, CaseStatus, DataOrigin
 
 
 class MockFluentRunner:
@@ -41,6 +41,7 @@ class MockFluentRunner:
         self._is_cancelled = False
         case.start_time = time.time()
         case.status = CaseStatus.PREPARATION
+        case.data_origin = DataOrigin.SYNTHETIC_MOCK
         case.error_message = ""
         case.current_iteration = 0
         case.total_iterations = case.parameters.iterations
@@ -127,13 +128,21 @@ class MockFluentRunner:
         return True
 
     def _generate_synthetic_results(self, case: SimulationCase, case_dir: Path) -> None:
-        """Produit des fichiers cl_test.txt, cd_test.txt et airfoil_pressure.csv réalistes."""
+        """Produit des fichiers cl_test.txt, cd_test.txt et airfoil_pressure.csv réalistes fondés sur la théorie aérodynamique."""
         alpha = case.parameters.alpha_deg
-        # Aérodynamique NACA 2212 type :
-        # Portance à alpha = 0 deg ~ 0.22, pente dCL/dalpha ~ 0.105 par deg (2*pi/rad)
-        cl_asymptote = 0.22 + 0.105 * alpha
-        # Traînée : traînée parasite Cd0 ~ 0.008 + traînée induite
-        cd_asymptote = 0.0085 + 0.045 * (cl_asymptote ** 2)
+        m = case.parameters.camber_m
+        t = case.parameters.thickness_t
+        p = case.parameters.camber_p
+
+        # Théorie des profils minces (Abbott & von Doenhoff) :
+        # Pente de portance ~ 2*pi / rad = 0.1097 / deg
+        # Angle de portance nulle alpha_0 ~ -115 * m deg
+        alpha_0 = -115.0 * m
+        cl_asymptote = 0.1097 * (alpha - alpha_0)
+
+        # Traînée de frottement et de profil Cd0 fonction de l'épaisseur + traînée induite k*CL^2
+        cd0 = 0.0055 + 0.035 * t + 0.015 * m
+        cd_asymptote = cd0 + (0.040 + 0.02 * t) * (cl_asymptote ** 2)
 
         total_iters = case.parameters.iterations
         cl_file = case_dir / "cl_test.txt"
@@ -145,7 +154,7 @@ class MockFluentRunner:
             f_cd.write('((cd-rep "drag")\n')
 
             for it in range(1, total_iters + 1):
-                decay = math.exp(-it / 30.0)
+                decay = math.exp(- 15.0 * it / max(1, total_iters))
                 noise_cl = (random.random() - 0.5) * 0.005 * decay
                 noise_cd = (random.random() - 0.5) * 0.001 * decay
                 val_cl = cl_asymptote * (1.0 - 0.3 * decay) + noise_cl

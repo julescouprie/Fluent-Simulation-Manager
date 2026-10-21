@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from core.case_model import PhysicalParameters, SimulationResults
+from .quality_checker import assess_convergence_quality, QualityFlag
 
 
 def read_report(path: Path) -> pd.DataFrame:
@@ -175,6 +176,15 @@ def process_case_results(case_dir: Path, params: PhysicalParameters) -> Simulati
         csv_out = out_dir / "pressure_distribution.csv"
         press_df.to_csv(csv_out, index=False)
         results.pressure_file = str(csv_out)
+
+    # Évaluation scientifique de la convergence et de la qualité
+    quality = assess_convergence_quality(cl_df, cd_df)
+    results.is_converged = quality.is_converged
+    results.quality_flag = quality.quality_flag.value
+    results.cl_std_last_20 = quality.cl_std_last_20
+    results.cd_std_last_20 = quality.cd_std_last_20
+    results.cl_relative_change_pct = quality.cl_relative_change_pct
+    results.quality_message = quality.message
 
     results.postprocess_success = (results.cl_final is not None and results.cd_final is not None)
     return results
