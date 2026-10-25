@@ -103,7 +103,7 @@ class CampaignWidget(QWidget):
         # Résumé des variables actives
         self.lbl_active_vars = QLabel()
         self.lbl_active_vars.setWordWrap(True)
-        self.lbl_active_vars.setStyleSheet("color: #38bdf8; font-size: 11px;")
+        self.lbl_active_vars.setObjectName("lbl_metric")
         left_layout.addWidget(self.lbl_active_vars)
 
         # Boutons d'action
@@ -128,7 +128,7 @@ class CampaignWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
 
         self.lbl_table_header = QLabel("Tableau des configurations de la campagne (0 point)")
-        self.lbl_table_header.setStyleSheet("font-weight: bold; color: #f8fafc;")
+        self.lbl_table_header.setObjectName("lbl_section_title")
         right_layout.addWidget(self.lbl_table_header)
 
         self.table_preview = QTableWidget()

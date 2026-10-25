@@ -108,7 +108,7 @@ class AeroMappingWidget(QWidget):
         lay_fixed = QVBoxLayout(grp_fixed)
         self.lbl_fixed_info = QLabel("Aucun")
         self.lbl_fixed_info.setWordWrap(True)
-        self.lbl_fixed_info.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        self.lbl_fixed_info.setObjectName("lbl_metric")
         lay_fixed.addWidget(self.lbl_fixed_info)
         left_layout.addWidget(grp_fixed)
 
@@ -128,10 +128,9 @@ class AeroMappingWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(6)
 
-        self.figure = Figure(figsize=(8, 6), dpi=100, facecolor="#0f172a")
+        self.figure = Figure(figsize=(8, 6), dpi=100, facecolor="#FFFFFF")
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
-        self.toolbar.setStyleSheet("background-color: #1e293b; color: white;")
 
         right_layout.addWidget(self.toolbar)
         right_layout.addWidget(self.canvas, stretch=3)
@@ -229,12 +228,12 @@ class AeroMappingWidget(QWidget):
 
         if not cases:
             ax = self.figure.add_subplot(111)
-            ax.set_facecolor("#1e293b")
+            ax.set_facecolor("#FFFFFF")
             ax.text(
                 0.5, 0.5,
                 "Aucune donnée CFD disponible répondant aux filtres.\n"
                 "Lancez une campagne de calcul ou cochez 'Inclure les simulations fictives'.",
-                ha="center", va="center", transform=ax.transAxes, color="#94a3b8", fontsize=12
+                ha="center", va="center", transform=ax.transAxes, color="#6B7280", fontsize=12
             )
             self._style_axis(ax)
             self.canvas.draw()
@@ -254,7 +253,7 @@ class AeroMappingWidget(QWidget):
 
     def _plot_map2d(self, cases: List[SimulationCase], var_x, var_y, metric_key: str):
         ax = self.figure.add_subplot(111)
-        ax.set_facecolor("#1e293b")
+        ax.set_facecolor("#FFFFFF")
 
         x_vals = np.array([c.parameters.__dict__.get(var_x.id, var_x.default_val) for c in cases])
         y_vals = np.array([c.parameters.__dict__.get(var_y.id, var_y.default_val) for c in cases])
@@ -269,39 +268,38 @@ class AeroMappingWidget(QWidget):
                 XI, YI = np.meshgrid(xi, yi)
                 ZI = griddata((x_vals, y_vals), z_vals, (XI, YI), method="linear")
 
-                cp = ax.contourf(XI, YI, ZI, levels=20, cmap="viridis", alpha=0.85)
+                cp = ax.contourf(XI, YI, ZI, levels=20, cmap="Blues", alpha=0.7)
                 cbar = self.figure.colorbar(cp, ax=ax)
-                cbar.set_label(f"{self.combo_z.currentText()}", color="#f8fafc")
-                cbar.ax.yaxis.set_tick_params(color="#94a3b8")
+                cbar.set_label(f"{self.combo_z.currentText()}", color="#374151")
+                cbar.ax.yaxis.set_tick_params(color="#6B7280")
                 plt_ticks = cbar.ax.get_yticks()
-                cbar.ax.set_yticklabels([f"{t:.3f}" for t in plt_ticks], color="#94a3b8")
+                cbar.ax.set_yticklabels([f"{t:.3f}" for t in plt_ticks], color="#6B7280")
                 has_mesh = True
             except Exception:
                 pass
 
         # 2. Superposition des points CFD réels calculés
-        # Distinction visuelle : Disque = CFD Réelle | Triangle = Simulation Fictive | Étoile = Krigeage
         for c, x, y, z in zip(cases, x_vals, y_vals, z_vals):
             if c.data_origin == DataOrigin.REAL_CFD:
-                marker, color, label_marker = "o", "#38bdf8", "Point CFD réel"
+                marker, color, label_marker = "o", "#2563EB", "Point CFD réel"
             elif c.data_origin == DataOrigin.SYNTHETIC_MOCK:
-                marker, color, label_marker = "^", "#facc15", "Simulation test/DoE"
+                marker, color, label_marker = "^", "#D97706", "Simulation test/DoE"
             else:
-                marker, color, label_marker = "*", "#a855f7", "Prédiction Krigeage"
+                marker, color, label_marker = "*", "#7C3AED", "Prédiction Krigeage"
 
-            edge = "white" if c.status == CaseStatus.TERMINEE_CONVERGEE else "red"
+            edge = "#16A34A" if c.status == CaseStatus.TERMINEE_CONVERGEE else "#DC2626"
             ax.scatter(x, y, c=color, edgecolors=edge, s=80, marker=marker, zorder=5, linewidth=1.5)
-            ax.annotate(f"{z:.3f}", (x, y), textcoords="offset points", xytext=(0, 7), ha="center", color="#ffffff", fontsize=8)
+            ax.annotate(f"{z:.3f}", (x, y), textcoords="offset points", xytext=(0, 7), ha="center", color="#374151", fontsize=8)
 
-        ax.set_xlabel(f"{var_x.name} ({var_x.symbol}) [{var_x.unit}]", color="#f8fafc", fontsize=11)
-        ax.set_ylabel(f"{var_y.name} ({var_y.symbol}) [{var_y.unit}]", color="#f8fafc", fontsize=11)
-        ax.set_title(f"Aéro Mapping 2D : {self.combo_z.currentText()} = f({var_x.symbol}, {var_y.symbol})", color="#38bdf8", fontweight="bold", fontsize=12)
+        ax.set_xlabel(f"{var_x.name} ({var_x.symbol}) [{var_x.unit}]", color="#374151", fontsize=11)
+        ax.set_ylabel(f"{var_y.name} ({var_y.symbol}) [{var_y.unit}]", color="#374151", fontsize=11)
+        ax.set_title(f"Aéro Mapping 2D : {self.combo_z.currentText()} = f({var_x.symbol}, {var_y.symbol})", color="#111827", fontweight="bold", fontsize=12)
 
         self._style_axis(ax)
 
     def _plot_influence1d(self, cases: List[SimulationCase], var_x, metric_key: str):
         ax = self.figure.add_subplot(111)
-        ax.set_facecolor("#1e293b")
+        ax.set_facecolor("#FFFFFF")
 
         data = sorted([
             (c.parameters.__dict__.get(var_x.id, var_x.default_val), getattr(c.results, metric_key), c.name, c.data_origin)
@@ -311,41 +309,42 @@ class AeroMappingWidget(QWidget):
         x_vals = [d[0] for d in data]
         y_vals = [d[1] for d in data]
 
-        ax.plot(x_vals, y_vals, "o-", color="#38bdf8", linewidth=2, markersize=7, label="Données CFD simulées")
+        ax.plot(x_vals, y_vals, "o-", color="#2563EB", linewidth=2, markersize=7, label="Données CFD simulées")
         for x, y, name, origin in data:
-            ax.annotate(f"{y:.4f}", (x, y), textcoords="offset points", xytext=(0, 8), ha="center", color="#ffffff", fontsize=9)
+            ax.annotate(f"{y:.4f}", (x, y), textcoords="offset points", xytext=(0, 8), ha="center", color="#374151", fontsize=9)
 
-        ax.set_xlabel(f"{var_x.name} ({var_x.symbol}) [{var_x.unit}]", color="#f8fafc", fontsize=11)
-        ax.set_ylabel(f"{self.combo_z.currentText()}", color="#f8fafc", fontsize=11)
-        ax.set_title(f"Influence de {var_x.name} sur {self.combo_z.currentText()}", color="#38bdf8", fontweight="bold", fontsize=12)
-        ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc")
+        ax.set_xlabel(f"{var_x.name} ({var_x.symbol}) [{var_x.unit}]", color="#374151", fontsize=11)
+        ax.set_ylabel(f"{self.combo_z.currentText()}", color="#374151", fontsize=11)
+        ax.set_title(f"Influence de {var_x.name} sur {self.combo_z.currentText()}", color="#111827", fontweight="bold", fontsize=12)
+        ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151")
 
         self._style_axis(ax)
 
     def _plot_comparison_bars(self, cases: List[SimulationCase], metric_key: str):
         ax = self.figure.add_subplot(111)
-        ax.set_facecolor("#1e293b")
+        ax.set_facecolor("#FFFFFF")
 
         top_cases = cases[:12]  # Max 12 pour lisibilité
         names = [c.name for c in top_cases]
         vals = [getattr(c.results, metric_key) for c in top_cases]
 
-        bars = ax.bar(range(len(names)), vals, color="#0284c7", edgecolor="#38bdf8", width=0.6)
+        bars = ax.bar(range(len(names)), vals, color="#2563EB", edgecolor="#DBEAFE", width=0.6)
         for b, v in zip(bars, vals):
-            ax.text(b.get_x() + b.get_width() / 2, v + 0.01 * (max(vals) - min(vals)), f"{v:.4f}", ha="center", va="bottom", color="#f8fafc", fontsize=9)
+            ax.text(b.get_x() + b.get_width() / 2, v + 0.01 * (max(vals) - min(vals)), f"{v:.4f}", ha="center", va="bottom", color="#374151", fontsize=9)
 
         ax.set_xticks(range(len(names)))
-        ax.set_xticklabels(names, rotation=25, ha="right", color="#94a3b8")
-        ax.set_ylabel(self.combo_z.currentText(), color="#f8fafc")
-        ax.set_title("Comparaison des configurations simulées", color="#38bdf8", fontweight="bold")
+        ax.set_xticklabels(names, rotation=25, ha="right", color="#6B7280")
+        ax.set_ylabel(self.combo_z.currentText(), color="#374151")
+        ax.set_title("Comparaison des configurations simulées", color="#111827", fontweight="bold")
 
         self._style_axis(ax)
 
     def _style_axis(self, ax):
-        ax.grid(True, linestyle="--", alpha=0.3, color="#64748b")
-        ax.tick_params(colors="#94a3b8", which="both")
+        ax.set_facecolor("#FFFFFF")
+        ax.grid(True, linestyle="--", alpha=0.4, color="#E5E7EB")
+        ax.tick_params(colors="#6B7280", which="both")
         for spine in ax.spines.values():
-            spine.set_color("#334155")
+            spine.set_color("#E5E7EB")
 
     def _update_table(self, cases: List[SimulationCase]):
         self.table_details.setRowCount(len(cases))

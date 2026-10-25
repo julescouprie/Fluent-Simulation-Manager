@@ -1,5 +1,5 @@
 from .main_window import MainWindow
-from .theme import DARK_TECH_STYLESHEET
+from .theme import LIGHT_PRO_STYLESHEET
 from .dashboard_widget import DashboardWidget
 from .simulation_table import SimulationTableWidget
 from .case_dialog import CaseDialog
@@ -14,7 +14,7 @@ from .kriging_export_widget import KrigingExportWidget
 
 __all__ = [
     "MainWindow",
-    "DARK_TECH_STYLESHEET",
+    "LIGHT_PRO_STYLESHEET",
     "DashboardWidget",
     "SimulationTableWidget",
     "CaseDialog",

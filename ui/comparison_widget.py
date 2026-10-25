@@ -50,10 +50,9 @@ class ComparisonWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(6)
 
-        self.figure = Figure(figsize=(8, 5), dpi=100, facecolor="#0f172a")
+        self.figure = Figure(figsize=(8, 5), dpi=100, facecolor="#FFFFFF")
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.toolbar = NavigationToolbar2QT(self.canvas, self)
-        self.toolbar.setStyleSheet("background-color: #1e293b; color: white;")
 
         right_layout.addWidget(self.toolbar)
         right_layout.addWidget(self.canvas, stretch=3)
@@ -180,14 +179,14 @@ class ComparisonWidget(QWidget):
 
         if not selected_cases:
             ax = self.figure.add_subplot(111)
-            ax.set_facecolor("#1e293b")
+            ax.set_facecolor("#FFFFFF")
             ax.text(
                 0.5, 0.5,
                 "Aucune simulation sélectionnée ou terminée.\nCochez au moins un cas terminé pour afficher les résultats.",
                 horizontalalignment="center",
                 verticalalignment="center",
                 transform=ax.transAxes,
-                color="#94a3b8",
+                color="#6B7280",
                 fontsize=13,
             )
             self._style_axis(ax)
@@ -195,9 +194,9 @@ class ComparisonWidget(QWidget):
             return
 
         ax = self.figure.add_subplot(111)
-        ax.set_facecolor("#1e293b")
+        ax.set_facecolor("#FFFFFF")
 
-        colors = ["#38bdf8", "#34d399", "#f43f5e", "#fbbf24", "#a855f7", "#ec4899", "#14b8a6", "#f97316"]
+        colors = ["#2563EB", "#16A34A", "#DC2626", "#D97706", "#7C3AED", "#DB2777", "#0D9488", "#EA580C"]
 
         if self.radio_cl_alpha.isChecked():
             # CL vs Alpha
@@ -205,14 +204,14 @@ class ComparisonWidget(QWidget):
             alphas = [d[0] for d in data]
             cls = [d[1] for d in data]
 
-            ax.plot(alphas, cls, "o-", color="#38bdf8", linewidth=2, markersize=7, label="CL (Portance)")
+            ax.plot(alphas, cls, "o-", color="#2563EB", linewidth=2, markersize=7, label="CL (Portance)")
             for alpha, cl, name in data:
                 ax.annotate(f"{cl:.4f}", (alpha, cl), textcoords="offset points", xytext=(0, 8),
-                            ha="center", color="#f8fafc", fontsize=9)
-            ax.set_xlabel("Angle d'incidence alpha [°]", color="#f8fafc", fontsize=11)
-            ax.set_ylabel("Coefficient de portance CL [-]", color="#f8fafc", fontsize=11)
-            ax.set_title("Courbe de portance CL = f(alpha) - NACA 2212", color="#38bdf8", fontsize=13, fontweight="bold")
-            ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc")
+                            ha="center", color="#374151", fontsize=9)
+            ax.set_xlabel("Angle d'incidence alpha [°]", color="#374151", fontsize=11)
+            ax.set_ylabel("Coefficient de portance CL [-]", color="#374151", fontsize=11)
+            ax.set_title("Courbe de portance CL = f(alpha) - NACA 2212", color="#111827", fontsize=13, fontweight="bold")
+            ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151")
 
         elif self.radio_cd_alpha.isChecked():
             # CD vs Alpha
@@ -220,14 +219,14 @@ class ComparisonWidget(QWidget):
             alphas = [d[0] for d in data]
             cds = [d[1] for d in data]
 
-            ax.plot(alphas, cds, "s-", color="#f43f5e", linewidth=2, markersize=7, label="CD (Traînée)")
+            ax.plot(alphas, cds, "s-", color="#DC2626", linewidth=2, markersize=7, label="CD (Traînée)")
             for alpha, cd, name in data:
                 ax.annotate(f"{cd:.5f}", (alpha, cd), textcoords="offset points", xytext=(0, 8),
-                            ha="center", color="#f8fafc", fontsize=9)
-            ax.set_xlabel("Angle d'incidence alpha [°]", color="#f8fafc", fontsize=11)
-            ax.set_ylabel("Coefficient de traînée CD [-]", color="#f8fafc", fontsize=11)
-            ax.set_title("Courbe de traînée CD = f(alpha) - NACA 2212", color="#f43f5e", fontsize=13, fontweight="bold")
-            ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc")
+                            ha="center", color="#374151", fontsize=9)
+            ax.set_xlabel("Angle d'incidence alpha [°]", color="#374151", fontsize=11)
+            ax.set_ylabel("Coefficient de traînée CD [-]", color="#374151", fontsize=11)
+            ax.set_title("Courbe de traînée CD = f(alpha) - NACA 2212", color="#DC2626", fontsize=13, fontweight="bold")
+            ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151")
 
         elif self.radio_cl_cd.isChecked():
             # Finesse CL/CD vs Alpha
@@ -240,14 +239,14 @@ class ComparisonWidget(QWidget):
             if data:
                 alphas = [d[0] for d in data]
                 ratios = [d[1] for d in data]
-                ax.plot(alphas, ratios, "^-", color="#34d399", linewidth=2, markersize=7, label="Finesse CL/CD")
+                ax.plot(alphas, ratios, "^-", color="#16A34A", linewidth=2, markersize=7, label="Finesse CL/CD")
                 for alpha, r in data:
                     ax.annotate(f"{r:.2f}", (alpha, r), textcoords="offset points", xytext=(0, 8),
-                                ha="center", color="#f8fafc", fontsize=9)
-            ax.set_xlabel("Angle d'incidence alpha [°]", color="#f8fafc", fontsize=11)
-            ax.set_ylabel("Finesse aérodynamique CL / CD [-]", color="#f8fafc", fontsize=11)
-            ax.set_title("Finesse aérodynamique = f(alpha)", color="#34d399", fontsize=13, fontweight="bold")
-            ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc")
+                                ha="center", color="#374151", fontsize=9)
+            ax.set_xlabel("Angle d'incidence alpha [°]", color="#374151", fontsize=11)
+            ax.set_ylabel("Finesse aérodynamique CL / CD [-]", color="#374151", fontsize=11)
+            ax.set_title("Finesse aérodynamique = f(alpha)", color="#16A34A", fontsize=13, fontweight="bold")
+            ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151")
 
         elif self.radio_conv.isChecked():
             # Convergence
@@ -259,10 +258,10 @@ class ComparisonWidget(QWidget):
                     if not cl_df.empty:
                         ax.plot(cl_df.iteration, cl_df.value, "-", color=color, linewidth=1.5,
                                 label=f"{c.name} (alpha={c.parameters.alpha_deg:.1f}°)")
-            ax.set_xlabel("Itération", color="#f8fafc", fontsize=11)
-            ax.set_ylabel("Coefficient CL [-]", color="#f8fafc", fontsize=11)
-            ax.set_title("Historique de convergence de la portance CL", color="#38bdf8", fontsize=13, fontweight="bold")
-            ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc", fontsize=9)
+            ax.set_xlabel("Itération", color="#374151", fontsize=11)
+            ax.set_ylabel("Coefficient CL [-]", color="#374151", fontsize=11)
+            ax.set_title("Historique de convergence de la portance CL", color="#111827", fontsize=13, fontweight="bold")
+            ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151", fontsize=9)
 
         elif self.radio_cp.isChecked():
             # Distribution Cp
@@ -282,20 +281,21 @@ class ComparisonWidget(QWidget):
                         except Exception:
                             pass
             ax.invert_yaxis()  # Convention aérodynamique : succion vers le haut
-            ax.set_xlabel("Position normalisée x / c [-]", color="#f8fafc", fontsize=11)
-            ax.set_ylabel("Coefficient de pression Cp [-]", color="#f8fafc", fontsize=11)
-            ax.set_title("Distribution du coefficient de pression Cp sur le profil", color="#38bdf8", fontsize=13, fontweight="bold")
-            ax.legend(facecolor="#1e293b", edgecolor="#334155", labelcolor="#f8fafc", fontsize=9)
+            ax.set_xlabel("Position normalisée x / c [-]", color="#374151", fontsize=11)
+            ax.set_ylabel("Coefficient de pression Cp [-]", color="#374151", fontsize=11)
+            ax.set_title("Distribution du coefficient de pression Cp sur le profil", color="#111827", fontsize=13, fontweight="bold")
+            ax.legend(facecolor="#FFFFFF", edgecolor="#E5E7EB", labelcolor="#374151", fontsize=9)
 
         self._style_axis(ax)
         self.figure.tight_layout()
         self.canvas.draw()
 
     def _style_axis(self, ax):
-        ax.grid(True, linestyle="--", alpha=0.3, color="#64748b")
-        ax.tick_params(colors="#94a3b8", which="both")
+        ax.set_facecolor("#FFFFFF")
+        ax.grid(True, linestyle="--", alpha=0.4, color="#E5E7EB")
+        ax.tick_params(colors="#6B7280", which="both")
         for spine in ax.spines.values():
-            spine.set_color("#334155")
+            spine.set_color("#E5E7EB")
 
     def _update_summary_table(self, selected_cases: List[SimulationCase]):
         self.table_summary.setRowCount(len(selected_cases))

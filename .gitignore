@@ -36,6 +36,7 @@ meshes/*.bdf
 meshes/*.msh
 export_kriging/
 backups/
+Fluent-Simulation-Manager/
 
 # Éditeurs et OS
 .vscode/

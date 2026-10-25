@@ -53,7 +53,6 @@ class DesignSpaceWidget(QWidget):
             "mais ne sont pas modifiables dans cette première étape 2D.</i>"
         )
         lbl_info.setWordWrap(True)
-        lbl_info.setStyleSheet("color: #cbd5e1; font-size: 12px;")
         lay_banner.addWidget(lbl_info)
         layout.addWidget(banner)
 
@@ -145,10 +144,10 @@ class DesignSpaceWidget(QWidget):
             # 7: Statut opérationnel
             if var.is_operational:
                 status_text = "✅ Opérationnel (Relié CFD)"
-                status_color = "#10b981"
+                status_color = "#16A34A"
             else:
                 status_text = "⏳ Non relié (Étapes futures)"
-                status_color = "#f59e0b"
+                status_color = "#D97706"
 
             item_status = QTableWidgetItem(status_text)
             item_status.setForeground(QColor(status_color))

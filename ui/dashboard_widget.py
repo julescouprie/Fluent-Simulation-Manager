@@ -9,26 +9,25 @@ from PySide6.QtCore import Qt
 
 
 class StatCard(QFrame):
-    """Carte individuelle d'indicateur numérique avec couleur d'accent."""
+    """Carte individuelle d'indicateur numérique sobre (thème clair)."""
 
-    def __init__(self, title: str, initial_value: str = "0", accent_color: str = "#0284c7"):
+    def __init__(self, title: str, initial_value: str = "0"):
         super().__init__()
         self.setFrameShape(QFrame.StyledPanel)
-        self.setStyleSheet(f"""
-            QFrame {{
-                background-color: #1e293b;
-                border: 1px solid #334155;
-                border-left: 4px solid {accent_color};
+        self.setMaximumHeight(80)
+        self.setStyleSheet("""
+            QFrame {
+                background-color: #FFFFFF;
+                border: 1px solid #E5E7EB;
                 border-radius: 8px;
-                padding: 6px;
-            }}
+            }
         """)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(2)
 
-        self.lbl_title = QLabel(title)
-        self.lbl_title.setObjectName("lbl_stat_name")
+        self.lbl_title = QLabel(title.upper())
+        self.lbl_title.setObjectName("lbl_stat_label")
         self.lbl_title.setAlignment(Qt.AlignLeft)
 
         self.lbl_value = QLabel(initial_value)
@@ -48,16 +47,16 @@ class DashboardWidget(QWidget):
     def __init__(self):
         super().__init__()
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 10)
+        layout.setContentsMargins(0, 0, 0, 12)
         layout.setSpacing(10)
 
-        self.card_total = StatCard("Total", "0", "#38bdf8")
-        self.card_pending = StatCard("En attente", "0", "#facc15")
-        self.card_running = StatCard("En cours", "0", "#0284c7")
-        self.card_converged = StatCard("Convergées", "0", "#10b981")
-        self.card_unconverged = StatCard("Non convergées", "0", "#f59e0b")
-        self.card_failed = StatCard("Échecs", "0", "#ef4444")
-        self.card_time = StatCard("Temps", "00:00", "#a855f7")
+        self.card_total = StatCard("Total")
+        self.card_pending = StatCard("En attente")
+        self.card_running = StatCard("En cours")
+        self.card_converged = StatCard("Convergées")
+        self.card_unconverged = StatCard("Non convergées")
+        self.card_failed = StatCard("Échecs")
+        self.card_time = StatCard("Temps", "00:00")
 
         layout.addWidget(self.card_total)
         layout.addWidget(self.card_pending)

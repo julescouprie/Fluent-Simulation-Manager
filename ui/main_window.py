@@ -9,7 +9,7 @@ from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QFileDialog,
-    QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSplitter,
+    QStackedWidget,
     QTabWidget,
     QTextBrowser,
     QVBoxLayout,
@@ -38,17 +39,23 @@ from ui.design_space_widget import DesignSpaceWidget
 from ui.campaign_widget import CampaignWidget
 from ui.aero_mapping_widget import AeroMappingWidget
 from ui.kriging_export_widget import KrigingExportWidget
-from ui.theme import DARK_TECH_STYLESHEET
+from ui.theme import LIGHT_PRO_STYLESHEET
 
 
 class MainWindow(QMainWindow):
     """Fenêtre principale de l'application Fluent Simulation Manager."""
 
+    # Indices des pages du QStackedWidget
+    PAGE_OVERVIEW = 0
+    PAGE_CAMPAIGNS = 1
+    PAGE_AERO_MAPPING = 2
+    PAGE_DATA = 3
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Fluent Simulation Manager - ANSYS Fluent 2026 R1")
-        self.resize(1320, 860)
-        self.setStyleSheet(DARK_TECH_STYLESHEET)
+        self.resize(1380, 900)
+        self.setStyleSheet(LIGHT_PRO_STYLESHEET)
 
         self.settings = SettingsManager()
         self.project_manager = ProjectManager()
@@ -77,25 +84,115 @@ class MainWindow(QMainWindow):
 
         self._update_all_views()
 
+    # ------------------------------------------------------------------
+    # Construction de l'interface
+    # ------------------------------------------------------------------
+
     def _setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(12, 10, 12, 8)
-        main_layout.setSpacing(8)
+        root_layout = QHBoxLayout(central_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
 
-        # 1. Tableau de bord
+        # ── Sidebar ────────────────────────────────────────────────────
+        self.sidebar = QWidget()
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(210)
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(12, 16, 12, 16)
+        sidebar_layout.setSpacing(4)
+
+        # Titre de l'application dans la sidebar
+        app_title = QLabel("FSM")
+        app_title.setStyleSheet(
+            "font-size: 18px; font-weight: bold; color: #111827; padding: 4px 4px 16px 4px;"
+        )
+        sidebar_layout.addWidget(app_title)
+
+        # Boutons de navigation
+        self._nav_buttons: List[QPushButton] = []
+
+        nav_items = [
+            ("🏠  Vue d'ensemble", self.PAGE_OVERVIEW),
+            ("🎯  Campagnes", self.PAGE_CAMPAIGNS),
+            ("🗺️  Aéro Mapping", self.PAGE_AERO_MAPPING),
+            ("📦  Données", self.PAGE_DATA),
+        ]
+
+        for label, page_idx in nav_items:
+            btn = QPushButton(label)
+            btn.setObjectName("nav_btn")
+            btn.setCheckable(False)
+            btn.clicked.connect(lambda checked=False, idx=page_idx: self._navigate_to(idx))
+            sidebar_layout.addWidget(btn)
+            self._nav_buttons.append(btn)
+
+        sidebar_layout.addStretch()
+
+        # Séparateur
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setStyleSheet("color: #E5E7EB;")
+        sidebar_layout.addWidget(sep)
+
+        # Bouton Réglages
+        btn_settings = QPushButton("⚙️  Réglages")
+        btn_settings.setObjectName("nav_btn")
+        btn_settings.clicked.connect(self._open_settings)
+        sidebar_layout.addWidget(btn_settings)
+
+        root_layout.addWidget(self.sidebar)
+
+        # ── Contenu principal : QStackedWidget ─────────────────────────
+        self.stack = QStackedWidget()
+        root_layout.addWidget(self.stack, stretch=1)
+
+        # Alias pour compatibilité (les tests/méthodes qui référencent self.tabs)
+        self.tabs = self.stack
+
+        # ── Page 0 : Vue d'ensemble ────────────────────────────────────
+        page_overview = self._build_page_overview()
+        self.stack.addWidget(page_overview)
+
+        # ── Page 1 : Campagnes ─────────────────────────────────────────
+        page_campaigns = self._build_page_campaigns()
+        self.stack.addWidget(page_campaigns)
+
+        # ── Page 2 : Aéro Mapping ──────────────────────────────────────
+        page_aero = self._build_page_aero_mapping()
+        self.stack.addWidget(page_aero)
+
+        # ── Page 3 : Données ───────────────────────────────────────────
+        page_data = self._build_page_data()
+        self.stack.addWidget(page_data)
+
+        # Activer la première page
+        self._navigate_to(self.PAGE_OVERVIEW)
+
+        # Barre d'état
+        self.status_bar = self.statusBar()
+        self.lbl_status_mode = QLabel()
+        self.lbl_status_fluent = QLabel()
+        self.status_bar.addPermanentWidget(self.lbl_status_mode)
+        self.status_bar.addPermanentWidget(self.lbl_status_fluent)
+        self._update_status_bar()
+
+    def _build_page_overview(self) -> QWidget:
+        """Page 0 — Vue d'ensemble : Dashboard + File de simulation + Log."""
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(20, 16, 20, 12)
+        lay.setSpacing(12)
+
+        # Titre de la page
+        lbl_title = QLabel("Vue d'ensemble")
+        lbl_title.setObjectName("lbl_page_title")
+        lay.addWidget(lbl_title)
+
+        # Dashboard intégré
         self.dashboard = DashboardWidget()
-        main_layout.addWidget(self.dashboard)
-
-        # 2. Onglets principaux
-        self.tabs = QTabWidget()
-
-        # Onglet 1 : Gestion & Exécution
-        tab_queue = QWidget()
-        lay_tab_queue = QVBoxLayout(tab_queue)
-        lay_tab_queue.setContentsMargins(6, 8, 6, 6)
-        lay_tab_queue.setSpacing(8)
+        lay.addWidget(self.dashboard)
 
         # Barre d'actions
         action_bar = QHBoxLayout()
@@ -117,11 +214,10 @@ class MainWindow(QMainWindow):
         action_bar.addWidget(btn_edit)
         action_bar.addWidget(btn_del)
         action_bar.addWidget(btn_import)
-
         action_bar.addStretch()
 
         # Boutons de contrôle de la file
-        self.btn_run = QPushButton("🚀 LANCER LES SIMULATIONS")
+        self.btn_run = QPushButton("🚀 Lancer les simulations")
         self.btn_run.setObjectName("btn_primary")
         self.btn_run.clicked.connect(self._on_launch_clicked)
 
@@ -139,65 +235,112 @@ class MainWindow(QMainWindow):
         action_bar.addWidget(self.btn_pause)
         action_bar.addWidget(self.btn_cancel)
 
-        lay_tab_queue.addLayout(action_bar)
+        lay.addLayout(action_bar)
 
-        # Splitter vertical : Tableau des simulations + Panneau bas (Console / Détails)
+        # Splitter vertical : Tableau + Panneau bas (Log / Détails)
         v_splitter = QSplitter(Qt.Vertical)
 
-        # Tableau
         self.table = SimulationTableWidget()
         v_splitter.addWidget(self.table)
 
         # Panneau inférieur avec sous-onglets
         sub_tabs = QTabWidget()
 
-        # Sous-onglet 1 : Console Fluent en direct
         self.log_viewer = LogViewerWidget()
-        sub_tabs.addTab(self.log_viewer, "📜 Journal d'exécution Fluent (En direct)")
+        sub_tabs.addTab(self.log_viewer, "📜 Journal Fluent (En direct)")
 
-        # Sous-onglet 2 : Détails du cas sélectionné
         self.details_widget = QTextBrowser()
-        self.details_widget.setStyleSheet("background-color: #020617; color: #cbd5e1; padding: 8px;")
-        sub_tabs.addTab(self.details_widget, "🔍 Détails du cas sélectionné")
+        sub_tabs.addTab(self.details_widget, "🔍 Détails du cas")
 
         v_splitter.addWidget(sub_tabs)
         v_splitter.setStretchFactor(0, 3)
         v_splitter.setStretchFactor(1, 2)
 
-        lay_tab_queue.addWidget(v_splitter)
-        self.tabs.addTab(tab_queue, "⚡ File de Simulation & Exécution")
+        lay.addWidget(v_splitter)
+        return page
 
-        # Onglet 2 : Espace de Conception (Design Space)
+    def _build_page_campaigns(self) -> QWidget:
+        """Page 1 — Campagnes : Design Space + Campagnes DoE."""
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(20, 16, 20, 12)
+        lay.setSpacing(12)
+
+        lbl_title = QLabel("Campagnes & Plans d'Expériences")
+        lbl_title.setObjectName("lbl_page_title")
+        lay.addWidget(lbl_title)
+
+        inner_tabs = QTabWidget()
+
+        # Sous-onglet : Espace de Conception
         self.design_space_widget = DesignSpaceWidget(self.project_manager.design_space)
         self.design_space_widget.design_space_changed.connect(self._on_design_space_changed)
-        self.tabs.addTab(self.design_space_widget, "📐 Espace de Conception")
+        inner_tabs.addTab(self.design_space_widget, "📐 Espace de Conception")
 
-        # Onglet 3 : Campagnes & Plans d'Expériences (DoE)
+        # Sous-onglet : Campagnes DoE
         self.campaign_widget = CampaignWidget(self.project_manager.design_space)
         self.campaign_widget.campaign_created.connect(self._on_campaign_created)
-        self.tabs.addTab(self.campaign_widget, "🎯 Campagnes & DoE")
+        inner_tabs.addTab(self.campaign_widget, "🎯 Campagnes DoE")
 
-        # Onglet 4 : Aéro Mapping
+        lay.addWidget(inner_tabs)
+        return page
+
+    def _build_page_aero_mapping(self) -> QWidget:
+        """Page 2 — Aéro Mapping : Mapping + Comparaison polaires."""
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(20, 16, 20, 12)
+        lay.setSpacing(12)
+
+        lbl_title = QLabel("Aéro Mapping & Analyse Polaires")
+        lbl_title.setObjectName("lbl_page_title")
+        lay.addWidget(lbl_title)
+
+        inner_tabs = QTabWidget()
+
         self.aero_mapping_widget = AeroMappingWidget(self.project_manager.design_space)
-        self.tabs.addTab(self.aero_mapping_widget, "🗺️ Aéro Mapping")
+        inner_tabs.addTab(self.aero_mapping_widget, "🗺️ Aéro Mapping")
 
-        # Onglet 5 : Analyse Polaires & Cp
         self.comparison_widget = ComparisonWidget()
-        self.tabs.addTab(self.comparison_widget, "📊 Analyse Polaires & Cp")
+        inner_tabs.addTab(self.comparison_widget, "📊 Analyse Polaires & Cp")
 
-        # Onglet 6 : Base de Données & Export Krigeage
+        lay.addWidget(inner_tabs)
+        return page
+
+    def _build_page_data(self) -> QWidget:
+        """Page 3 — Données : Export Krigeage."""
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(20, 16, 20, 12)
+        lay.setSpacing(12)
+
+        lbl_title = QLabel("Données & Export Krigeage")
+        lbl_title.setObjectName("lbl_page_title")
+        lay.addWidget(lbl_title)
+
         self.kriging_export_widget = KrigingExportWidget(self.project_manager.design_space)
-        self.tabs.addTab(self.kriging_export_widget, "📦 Export Krigeage")
+        lay.addWidget(self.kriging_export_widget)
+        return page
 
-        main_layout.addWidget(self.tabs)
+    # ------------------------------------------------------------------
+    # Navigation sidebar
+    # ------------------------------------------------------------------
 
-        # Barre d'état
-        self.status_bar = self.statusBar()
-        self.lbl_status_mode = QLabel()
-        self.lbl_status_fluent = QLabel()
-        self.status_bar.addPermanentWidget(self.lbl_status_mode)
-        self.status_bar.addPermanentWidget(self.lbl_status_fluent)
-        self._update_status_bar()
+    def _navigate_to(self, page_idx: int):
+        """Bascule vers la page demandée et met à jour les boutons de la sidebar."""
+        self.stack.setCurrentIndex(page_idx)
+        for i, btn in enumerate(self._nav_buttons):
+            if i == page_idx:
+                btn.setObjectName("nav_btn_active")
+            else:
+                btn.setObjectName("nav_btn")
+            # Forcer le re-rendu du style
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
+
+    # ------------------------------------------------------------------
+    # Menus
+    # ------------------------------------------------------------------
 
     def _setup_menus(self):
         menubar = self.menuBar()
@@ -300,6 +443,10 @@ class MainWindow(QMainWindow):
         act_about.triggered.connect(self._show_about)
         menu_help.addAction(act_about)
 
+    # ------------------------------------------------------------------
+    # Connexions des signaux
+    # ------------------------------------------------------------------
+
     def _connect_signals(self):
         # Table
         self.table.itemSelectionChanged.connect(self._on_table_selection_changed)
@@ -319,6 +466,10 @@ class MainWindow(QMainWindow):
         self.queue_worker.queue_state_changed.connect(self._on_queue_state_changed)
         self.queue_worker.queue_finished.connect(self._on_queue_finished)
 
+    # ------------------------------------------------------------------
+    # Initialisation des cas par défaut
+    # ------------------------------------------------------------------
+
     def _init_default_cases(self):
         """Initialise une série d'angles d'incidence typiques pour l'étude aérodynamique."""
         angles = [0.0, 2.0, 4.0, 6.0, 8.0]
@@ -332,6 +483,10 @@ class MainWindow(QMainWindow):
             )
             case = SimulationCase(name=f"NACA 2212 - Alpha {a:+.1f}°", parameters=p)
             self.project_manager.add_case(case)
+
+    # ------------------------------------------------------------------
+    # Mise à jour globale des vues
+    # ------------------------------------------------------------------
 
     def _update_all_views(self):
         self.table.populate(self.project_manager.cases)
@@ -360,24 +515,25 @@ class MainWindow(QMainWindow):
         for c in cases:
             self.project_manager.add_case(c)
         self._update_all_views()
-        self.tabs.setCurrentIndex(0)
+        # Naviguer vers la vue d'ensemble après création d'une campagne
+        self._navigate_to(self.PAGE_OVERVIEW)
 
     def _update_status_bar(self):
         mode = self.settings.simulation_mode
         if mode == "mock":
             self.lbl_status_mode.setText("🟡 Mode Test Fictif (Sans licence) | ")
-            self.lbl_status_mode.setStyleSheet("color: #facc15; font-weight: bold;")
+            self.lbl_status_mode.setStyleSheet("color: #D97706; font-weight: bold;")
             self.lbl_status_fluent.setText("Calculs de démonstration")
-            self.lbl_status_fluent.setStyleSheet("color: #94a3b8;")
+            self.lbl_status_fluent.setStyleSheet("color: #6B7280;")
         else:
             self.lbl_status_mode.setText("🟢 Mode Réel ANSYS Fluent | ")
-            self.lbl_status_mode.setStyleSheet("color: #10b981; font-weight: bold;")
+            self.lbl_status_mode.setStyleSheet("color: #16A34A; font-weight: bold;")
             if self.settings.is_fluent_valid():
                 self.lbl_status_fluent.setText(f"Fluent : {Path(self.settings.fluent_exe).name}")
-                self.lbl_status_fluent.setStyleSheet("color: #10b981;")
+                self.lbl_status_fluent.setStyleSheet("color: #16A34A;")
             else:
                 self.lbl_status_fluent.setText("Fluent : Introuvable (Configurer dans Préférences)")
-                self.lbl_status_fluent.setStyleSheet("color: #ef4444;")
+                self.lbl_status_fluent.setStyleSheet("color: #DC2626;")
 
     def _on_timer_tick(self):
         if self.start_timestamp:
@@ -385,7 +541,9 @@ class MainWindow(QMainWindow):
             counts = self.project_manager.get_summary_counts()
             self.dashboard.update_stats(counts, self.accumulated_seconds)
 
-    # --- Actions sur les simulations ---
+    # ------------------------------------------------------------------
+    # Actions sur les simulations
+    # ------------------------------------------------------------------
 
     def _add_case(self):
         dlg = CaseDialog(self)
@@ -476,7 +634,8 @@ class MainWindow(QMainWindow):
             self.log_viewer.clear()
             for line in content.splitlines():
                 self.log_viewer.append_log(line)
-            self.tabs.setCurrentIndex(0)
+            # Naviguer vers Vue d'ensemble pour voir le log
+            self._navigate_to(self.PAGE_OVERVIEW)
         else:
             QMessageBox.information(self, "Logs absents", "Aucun fichier journal disponible pour ce cas.")
 
@@ -492,10 +651,10 @@ class MainWindow(QMainWindow):
 
         p = case.parameters
         html = f"""
-        <h3>Cas : {case.name} <span style='color:#38bdf8;'>[{case.id}]</span></h3>
+        <h3>Cas : {case.name} <span style='color:#2563EB;'>[{case.id}]</span></h3>
         <p><b>Statut :</b> {case.status.value}</p>
         <hr>
-        <h4>Paramètres physiques & géométriques</h4>
+        <h4>Paramètres physiques &amp; géométriques</h4>
         <ul>
             <li><b>Angle d'incidence (&alpha;) :</b> {p.alpha_deg:+.2f}°</li>
             <li><b>Vitesse de l'écoulement (U) :</b> {p.velocity:.2f} m/s</li>
@@ -517,18 +676,20 @@ class MainWindow(QMainWindow):
             html += f"""
             <h4>Résultats aérodynamiques finaux</h4>
             <ul>
-                <li><b>Portance CL :</b> <span style='color:#34d399; font-weight:bold;'>{case.results.cl_final:.5f}</span></li>
-                <li><b>Traînée CD :</b> <span style='color:#f87171; font-weight:bold;'>{case.results.cd_final:.5f}</span></li>
-                <li><b>Finesse CL/CD :</b> <span style='color:#38bdf8; font-weight:bold;'>{case.results.cl_cd_ratio:.2f}</span></li>
+                <li><b>Portance CL :</b> <span style='color:#16A34A; font-weight:bold;'>{case.results.cl_final:.5f}</span></li>
+                <li><b>Traînée CD :</b> <span style='color:#DC2626; font-weight:bold;'>{case.results.cd_final:.5f}</span></li>
+                <li><b>Finesse CL/CD :</b> <span style='color:#2563EB; font-weight:bold;'>{case.results.cl_cd_ratio:.2f}</span></li>
                 <li><b>Durée du calcul :</b> {case.duration_seconds:.1f} secondes</li>
             </ul>
             """
         if case.error_message:
-            html += f"<p style='color:#ef4444;'><b>Erreur :</b> {case.error_message}</p>"
+            html += f"<p style='color:#DC2626;'><b>Erreur :</b> {case.error_message}</p>"
 
         self.details_widget.setHtml(html)
 
-    # --- Lancement et Gestion de la file ---
+    # ------------------------------------------------------------------
+    # Lancement et Gestion de la file
+    # ------------------------------------------------------------------
 
     def _on_launch_clicked(self):
         pending = [c for c in self.project_manager.cases if c.status == CaseStatus.EN_ATTENTE]
@@ -541,7 +702,6 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # Affichage du dialogue de validation préalable et confirmation
         dlg = ConfirmationDialog(self.project_manager.cases, self.settings, self)
         if dlg.exec():
             self.start_timestamp = time.time()
@@ -565,7 +725,9 @@ class MainWindow(QMainWindow):
         if ret == QMessageBox.Yes:
             self.queue_worker.stop_all()
 
-    # --- Événements du Worker ---
+    # ------------------------------------------------------------------
+    # Événements du Worker
+    # ------------------------------------------------------------------
 
     def _on_case_started(self, case_id: str):
         case = self.project_manager.get_case(case_id)
@@ -610,7 +772,9 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Toutes les simulations sont terminées.", 5000)
         self._update_all_views()
 
-    # --- Gestion de projets & Fichiers ---
+    # ------------------------------------------------------------------
+    # Gestion de projets & Fichiers
+    # ------------------------------------------------------------------
 
     def _new_project(self):
         if self.project_manager.is_modified:
@@ -728,7 +892,7 @@ class MainWindow(QMainWindow):
             "À propos de Fluent Simulation Manager",
             "<h2>Fluent Simulation Manager</h2>"
             "<p><b>Version :</b> 1.0.0 (Windows)</p>"
-            "<p><b>Cible :</b> ANSYS Fluent 2026 R1 & Aérodynamique de profils d'ailes (NACA 2212 2D)</p>"
+            "<p><b>Cible :</b> ANSYS Fluent 2026 R1 &amp; Aérodynamique de profils d'ailes (NACA 2212 2D)</p>"
             "<p>Application d'automatisation, de file d'attente séquentielle, de surveillance en temps réel "
             "et de post-traitement aérodynamique (CL, CD, Finesse, Cp, convergence).</p>"
             "<p>Conçu pour une utilisation ingénieur robuste et intuitive.</p>",

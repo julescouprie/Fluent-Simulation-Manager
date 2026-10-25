@@ -113,7 +113,7 @@ class KrigingExportWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
 
         self.lbl_table_header = QLabel("Aperçu de la table des données de krigeage (X et Y)")
-        self.lbl_table_header.setStyleSheet("font-weight: bold; color: #38bdf8;")
+        self.lbl_table_header.setObjectName("lbl_section_title")
         right_layout.addWidget(self.lbl_table_header)
 
         self.table_preview = QTableWidget()
