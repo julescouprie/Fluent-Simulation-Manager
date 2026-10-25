@@ -7,7 +7,13 @@ from scipy.optimize import minimize
 # 1. LECTURE DES DONNEES CFD
 # ==================================================
 
-data = pd.read_csv("recapitulatif_campagne.csv")
+from pathlib import Path
+
+csv_path = Path("data/recapitulatif_campagne.csv")
+if not csv_path.exists():
+    csv_path = Path("recapitulatif_campagne.csv")
+
+data = pd.read_csv(csv_path)
 
 # Entrees : cambrure maximale m et position p
 X = data[["m_%", "p"]].to_numpy(dtype=float)

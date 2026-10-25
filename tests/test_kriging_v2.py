@@ -5,11 +5,10 @@ import pandas as pd
 
 import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
-KRIGEAGE_DIR = BASE_DIR / "Krigeage Code"
-if str(KRIGEAGE_DIR) not in sys.path:
-    sys.path.insert(0, str(KRIGEAGE_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
-from kriging_model import (
+from kriging import (
     correlation,
     construire_R,
     fonction_objectif,
@@ -22,7 +21,9 @@ from kriging_model import (
 class TestKrigingV2(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.csv_path = KRIGEAGE_DIR / "recapitulatif_campagne.csv"
+        cls.csv_path = BASE_DIR / "data" / "recapitulatif_campagne.csv"
+        if not cls.csv_path.exists():
+            cls.csv_path = BASE_DIR / "Krigeage Code" / "recapitulatif_campagne.csv"
         cls.df, cls.inputs, cls.outputs, cls.info = charger_donnees_csv(cls.csv_path)
 
     def test_data_loading(self):

@@ -1,5 +1,5 @@
 """
-Module Krigeage - Moteur mathématique (V1 préservée et enrichie pour la V2).
+Module Krigeage - Moteur mathématique et modèle de substitution.
 
 Implémente :
 - Corrélation gaussienne : R(x1, x2, theta) = exp(-sum(theta * (x1 - x2)^2))
@@ -9,10 +9,11 @@ Implémente :
 - Normalisation Min-Max [0, 1] cohérente apprentissage / prédiction
 - Prédiction ponctuelle et vectorisée (batch / grille 1D/2D)
 - Détection des sorties de domaine d'apprentissage
-- Gestion propre des variations de dimension (d=1, d=2, etc.) et régularisation numérique (nugget)
+- Gestion des variations de dimension (d=1, d=2, etc.) et régularisation numérique (nugget)
+- Entraînement direct depuis un DataFrame CSV ou depuis une liste de simulations CFD
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -42,8 +43,7 @@ def construire_R(X_norm: np.ndarray, theta: np.ndarray, nugget: float = 0.0) -> 
     Si nugget > 0, ajoute un effet de pépite sur la diagonale pour le conditionnement numérique.
     """
     n = len(X_norm)
-    # Construction vectorisée optimisée pour de meilleures performances
-    # X_norm a la forme (n, d)
+    # Construction vectorisée optimisée
     diff = X_norm[:, np.newaxis, :] - X_norm[np.newaxis, :, :]  # (n, n, d)
     dist_sq = diff ** 2                                         # (n, n, d)
     R = np.exp(-np.sum(theta * dist_sq, axis=-1))              # (n, n)
@@ -146,7 +146,6 @@ class KrigingModel:
 
         # Normalisation Min-Max
         denom = self.X_max - self.X_min
-        # Protection division par zéro si min == max
         denom = np.where(denom == 0.0, 1.0, denom)
         x_norm = (x_arr - self.X_min) / denom
 
@@ -192,11 +191,10 @@ class KrigingModel:
         # Vérification du domaine
         inside_mask = np.all((X_arr >= self.X_min) & (X_arr <= self.X_max), axis=1)
 
-        # Calcul vectorisé de la matrice de corrélation croisée r_batch de taille (M, n)
-        # diff a la forme (M, n, d)
+        # Calcul vectorisé de la matrice de corrélation croisée r_batch (M, n)
         diff = X_norm_batch[:, np.newaxis, :] - self.X_norm[np.newaxis, :, :]
         dist_sq = diff ** 2
-        r_batch = np.exp(-np.sum(self.theta * dist_sq, axis=-1))  # (M, n)
+        r_batch = np.exp(-np.sum(self.theta * dist_sq, axis=-1))
 
         y_preds = self.mu + np.dot(r_batch, self.poids)
         return y_preds, inside_mask
@@ -228,7 +226,7 @@ def entrainer_modele(
     - Optimisation L-BFGS-B des theta sur [(1e-3, 100)]^d avec theta_initial = 1.0
     - En cas de dimension réduite créant des coordonnées identiques (ex : seule m_% choisie alors
       que plusieurs cas ont le même m_% avec des p différents), un nugget minimal (1e-6) est
-      appliqué pour éviter la singularité stricte de la matrice R sans altérer les autres cas.
+      appliqué pour garantir l'inversibilité de la matrice R sans altérer les autres cas.
     """
     X_arr = np.asarray(X, dtype=float)
     Y_arr = np.asarray(Y, dtype=float)
@@ -283,7 +281,6 @@ def entrainer_modele(
         opt_msg = str(resultat.message)
 
         if not opt_success and effective_nugget == 0.0:
-            # Tentative de rattrapage automatique avec léger conditionnement
             effective_nugget = 1e-6
             resultat = minimize(
                 fonction_objectif,
@@ -362,7 +359,6 @@ def charger_donnees_csv(
     if df.empty:
         raise ValueError(f"Le fichier '{path}' est vide.")
 
-    # Détection des colonnes
     cols = list(df.columns)
     
     # Sorties prioritaires spécifiées par le projet
@@ -372,11 +368,9 @@ def charger_donnees_csv(
     # Autres colonnes exclues des entrées
     exclusions = set(sorties_trouvees + ["Cas", "Statut", "Finesse", "Unnamed: 0"])
 
-    # Entrées candidates : colonnes numériques qui ne sont pas dans exclusions
     entrees_candidates = []
     for c in cols:
         if c not in exclusions:
-            # Vérification de conversion numérique
             try:
                 pd.to_numeric(df[c])
                 entrees_candidates.append(c)

@@ -20,9 +20,13 @@ class TestGUIHeadless(unittest.TestCase):
         window = MainWindow()
         self.assertIsNotNone(window)
 
-        # La navigation est maintenant un QStackedWidget avec 4 pages
+        # La navigation est un QStackedWidget avec 4 pages
         # self.tabs est un alias sur le QStackedWidget
         self.assertEqual(window.tabs.count(), 4)
+
+        # Vérification des widgets de prédiction & krigeage intégrés
+        self.assertIsNotNone(window.kriging_prediction_widget)
+        self.assertIsNotNone(window.kriging_export_widget)
 
         # Vérification des cas par défaut
         self.assertTrue(len(window.project_manager.cases) >= 5)

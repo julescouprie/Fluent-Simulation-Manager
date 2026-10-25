@@ -11,6 +11,7 @@ from .design_space_widget import DesignSpaceWidget
 from .campaign_widget import CampaignWidget
 from .aero_mapping_widget import AeroMappingWidget
 from .kriging_export_widget import KrigingExportWidget
+from .kriging_prediction_widget import KrigingPredictionWidget
 
 __all__ = [
     "MainWindow",
@@ -26,4 +27,5 @@ __all__ = [
     "CampaignWidget",
     "AeroMappingWidget",
     "KrigingExportWidget",
+    "KrigingPredictionWidget",
 ]

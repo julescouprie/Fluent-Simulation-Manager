@@ -39,6 +39,7 @@ from ui.design_space_widget import DesignSpaceWidget
 from ui.campaign_widget import CampaignWidget
 from ui.aero_mapping_widget import AeroMappingWidget
 from ui.kriging_export_widget import KrigingExportWidget
+from ui.kriging_prediction_widget import KrigingPredictionWidget
 from ui.theme import LIGHT_PRO_STYLESHEET
 
 
@@ -115,9 +116,9 @@ class MainWindow(QMainWindow):
 
         nav_items = [
             ("🏠  Vue d'ensemble", self.PAGE_OVERVIEW),
-            ("🎯  Campagnes", self.PAGE_CAMPAIGNS),
+            ("🎯  Campagnes & DoE", self.PAGE_CAMPAIGNS),
             ("🗺️  Aéro Mapping", self.PAGE_AERO_MAPPING),
-            ("📦  Données", self.PAGE_DATA),
+            ("🧠  Prédiction (Krigeage)", self.PAGE_DATA),
         ]
 
         for label, page_idx in nav_items:
@@ -308,18 +309,28 @@ class MainWindow(QMainWindow):
         return page
 
     def _build_page_data(self) -> QWidget:
-        """Page 3 — Données : Export Krigeage."""
+        """Page 3 — Prédiction & Krigeage : Métamodèle, prédictions interactives et exports."""
         page = QWidget()
         lay = QVBoxLayout(page)
         lay.setContentsMargins(20, 16, 20, 12)
         lay.setSpacing(12)
 
-        lbl_title = QLabel("Données & Export Krigeage")
+        lbl_title = QLabel("Prédiction Aérodynamique & Krigeage")
         lbl_title.setObjectName("lbl_page_title")
         lay.addWidget(lbl_title)
 
+        inner_tabs = QTabWidget()
+
+        # Widget de prédiction interactif par Krigeage
+        self.kriging_prediction_widget = KrigingPredictionWidget(self.project_manager.design_space)
+        self.kriging_widget = self.kriging_prediction_widget
+        inner_tabs.addTab(self.kriging_prediction_widget, "🧠 Modèle & Prédiction interactive")
+
+        # Widget d'exportation standardisée des matrices (conservé pour compatibilité)
         self.kriging_export_widget = KrigingExportWidget(self.project_manager.design_space)
-        lay.addWidget(self.kriging_export_widget)
+        inner_tabs.addTab(self.kriging_export_widget, "📦 Export standardisé des matrices")
+
+        lay.addWidget(inner_tabs)
         return page
 
     # ------------------------------------------------------------------
@@ -497,6 +508,8 @@ class MainWindow(QMainWindow):
             self.aero_mapping_widget.set_cases(self.project_manager.cases)
         if hasattr(self, "kriging_export_widget"):
             self.kriging_export_widget.set_cases(self.project_manager.cases)
+        if hasattr(self, "kriging_prediction_widget"):
+            self.kriging_prediction_widget.set_cases(self.project_manager.cases)
         if hasattr(self, "campaign_widget"):
             self.campaign_widget.update_active_variables_display()
         self._update_status_bar()
