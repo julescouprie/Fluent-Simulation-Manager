@@ -881,19 +881,16 @@ class MainWindow(QMainWindow):
             self._update_status_bar()
 
     def _generate_naca_mesh(self):
-        """Lance la génération du maillage profil_test.bdf à l'aide de mgsh_naca2212.py."""
-        script = Path("mgsh_naca2212.py")
-        if not script.exists():
-            QMessageBox.critical(self, "Fichier manquant", "Le script mgsh_naca2212.py est introuvable.")
-            return
-
+        """Lance la génération du maillage profil_test.bdf."""
         try:
+            from simulation.mesh_generator import generate_airfoil_mesh
+            out_bdf = Path("data/profil_test.bdf")
             self.statusBar().showMessage("Génération du maillage NACA 2212 avec Gmsh...")
-            subprocess.run([sys.executable, str(script)], check=True)
+            generate_airfoil_mesh(out_bdf, m=0.02, p=0.20, t=0.12, chord=1.0)
             QMessageBox.information(
                 self,
                 "Maillage généré",
-                "Le maillage profil_test.bdf a été généré avec succès par Gmsh !",
+                f"Le maillage a été généré avec succès dans :\n{out_bdf.resolve()}",
             )
             self.statusBar().showMessage("Maillage prêt.")
         except Exception as exc:

@@ -180,9 +180,9 @@ class MeshManager:
             abs(c - 1.0) < 1e-4
         )
         if is_default_2212:
-            candidate = Path("profil_test.bdf").resolve()
-            if candidate.is_file():
-                return candidate
+            for cand in (Path("data/profil_test.bdf"), Path("profil_test.bdf")):
+                if cand.is_file():
+                    return cand.resolve()
 
         m_code = int(round(m * 100))
         p_code = int(round(p * 10)) if m > 1e-4 else 0

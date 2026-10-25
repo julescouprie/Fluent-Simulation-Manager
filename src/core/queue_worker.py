@@ -122,7 +122,12 @@ class QueueWorker(QObject):
         fluent_exe = Path(self.fluent_exe_getter())
         mesh_path = Path(case.parameters.mesh_file)
         if not mesh_path.is_absolute():
-            mesh_path = Path.cwd() / mesh_path
+            if (Path.cwd() / mesh_path).is_file():
+                mesh_path = Path.cwd() / mesh_path
+            elif (Path.cwd() / "data" / mesh_path).is_file():
+                mesh_path = Path.cwd() / "data" / mesh_path
+            else:
+                mesh_path = Path.cwd() / mesh_path
 
         def log_cb(line: str):
             self.case_log.emit(case.id, line)

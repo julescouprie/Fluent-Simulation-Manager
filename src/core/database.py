@@ -12,8 +12,15 @@ from .campaign_model import DoECampaign, DoEStrategy
 class DatabaseManager:
     """Gestionnaire de persistance locale SQLite pour les campagnes DoE et les résultats CFD."""
 
-    def __init__(self, db_path: Path = Path("fsm_database.db")):
-        self.db_path = Path(db_path).resolve()
+    def __init__(self, db_path: Optional[Path] = None):
+        if db_path is not None:
+            self.db_path = Path(db_path).resolve()
+        elif Path("data/fsm_database.db").is_file():
+            self.db_path = Path("data/fsm_database.db").resolve()
+        elif Path("data").is_dir():
+            self.db_path = Path("data/fsm_database.db").resolve()
+        else:
+            self.db_path = Path("fsm_database.db").resolve()
         self._init_tables()
 
     def _get_connection(self) -> sqlite3.Connection:

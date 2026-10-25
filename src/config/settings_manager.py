@@ -8,7 +8,7 @@ class SettingsManager:
     """Gestionnaire de configuration persistante pour Fluent Simulation Manager."""
 
     DEFAULT_SETTINGS_PATH = Path(__file__).resolve().parent / "default_config.json"
-    USER_SETTINGS_PATH = Path(__file__).resolve().parent.parent / "fsm_config.json"
+    USER_SETTINGS_PATH = Path("fsm_config.json").resolve()
 
     def __init__(self, config_file: Optional[Path] = None):
         self.config_path = config_file or self.USER_SETTINGS_PATH
